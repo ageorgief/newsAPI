@@ -41,4 +41,13 @@ router.put("/news/:id", async (context) => {
     context.body = newsObj;
 });
 
+// Delete Route
+router.delete("/news/:id", async (context) => {
+    const id = context.params.id
+   
+    const newsObj = news.splice(id, 1)
+    
+    context.body = newsObj
+});
+
 module.exports = router;
