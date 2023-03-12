@@ -5,13 +5,7 @@ const router = new Router();
 
 router.use(bodyParser());
 
-//Read Route for id
-router.get("/news/:id", async (context) => {
-    const id = context.params.id;
-    context.body = news[id];
-});
-
-//Create Route
+// Create Route
 router.post("/news", async (context) => {
     const body = context.request.body;
 
@@ -19,11 +13,32 @@ router.post("/news", async (context) => {
     news.push(newsObj);
 
     context.body = newsObj;
-})
+});
 
-//Read Route 
+// Read Route 
 router.get("/news", async (context) => {
     context.body = news;
+});
+
+// Read Route for id
+router.get("/news/:id", async (context) => {
+    const id = context.params.id;
+    context.body = news[id];
+});
+
+// Update Route
+router.put("/news/:id", async (context) => {
+    const id = context.params.id
+    const body = context.request.body
+    
+    const newsObj = news[id]
+    newsObj.id = body.id;
+    newsObj.date = body.date;
+    newsObj.title = body.title;
+    newsObj.description = body.description;
+    newsObj.text = body.text;
+    
+    context.body = newsObj;
 });
 
 module.exports = router;
