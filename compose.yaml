@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: news_service
+    build: .
+    ports:
+        - "5252:3000"
+    environment:
+        PORT: 3000
+        MONGO_URI: mongodb://mongo:27017
+        DB_NAME: news
+    depends_on:
+      - mongo
+    restart: always
+    volumes:
+      - mongo_db:/data/db
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - "27014:27017"
+    restart: always
+
+volumes:
+  mongo_db: {}

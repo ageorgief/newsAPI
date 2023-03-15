@@ -4,7 +4,15 @@ const newsRoutes = require('./routes/news');
 const app = new Koa();
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://0.0.0.0:27016/news')
+const MONGO_URI = process.env.MONGO_URI;
+
+mongoose
+  .connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error(err));
 
 //Json Prettier Middleware
 app.use(json())
