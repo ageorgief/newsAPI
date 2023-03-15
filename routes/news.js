@@ -1,20 +1,26 @@
-const Router = require("koa-router");
+const Router = require('koa-router');
 const router = new Router();
-
 const bodyParser = require('koa-bodyparser');
-
 const News = require('../models/news');
-const { default: mongoose } = require("mongoose");
+const { default: mongoose } = require('mongoose');
+const newsValidationSchema = require('../validation/newsSchema');
 
 router.use(bodyParser());
 
 // Create Route
 router.post("/news", async (context) => {
     const body = context.request.body
+    const { error, value } = newsValidationSchema.validate(body, {
+        abortEarly: false,
+    });
+    if (error) {
+        context.response.status = 400;
+        return context.body = error.details;
+    }
 
     const news = new News({
         _id: new mongoose.Types.ObjectId,
-        date: body.date,
+        date: new Date(),
         title: body.title,
         description: body.description,
         text: body.text
@@ -24,25 +30,64 @@ router.post("/news", async (context) => {
         .then(result => {
             console.log(result);
             context.response.status = 201;
+            context.body = value;
         })
         .catch(err => {
             console.log(err);
-            context.response.status = 400;
+            context.response.status = 500;
         });
 });
 
 // Read Route 
 router.get("/news", async (context) => {
-    await News.find()
-        .exec()
-        .then(doc => {
+    let filterBy = context.query.filterBy;
+    let sortBy = context.query.sortBy;
+    console.log(filterBy);
+    console.log(sortBy);
+
+
+    let query = News.find();
+
+    if (filterBy) {
+        if (!Array.isArray(filterBy)) {
+            filterBy = Array.of(filterBy);
+            
+        } 
+
+        filterBy.forEach((filter) => {
+            const [field, value] = filter.split('~');
+            if (field === 'date') {
+                const date = new Date(value);
+                const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate()); // extract the date portion only
+                query = query.where(field).gte(dateOnly).lt(new Date(dateOnly.getTime() + 24 * 60 * 60 * 1000));
+            } else {
+                query = query.where(field).regex(new RegExp(value, 'i'));
+            }
+        });
+    }
+
+    if (sortBy) {
+        if (!Array.isArray(sortBy)) {
+            sortBy = Array.of(sortBy);
+        } 
+
+        const sortParams = sortBy.map(param => {
+            const [field, direction] = param.split('~');
+            return [field, direction === 'desc' ? -1 : 1];
+        });
+
+        query = query.sort(sortParams);
+    }
+
+    await query.exec()
+        .then((doc) => {
             console.log(doc);
             context.response.status = 200;
             context.body = doc;
         })
-        .catch(err => {
+        .catch((err) => {
             console.log(err);
-            context.response.status = 400;
+            context.response.status = 500;
         });
 });
 
@@ -60,7 +105,7 @@ router.get("/news/:id", async (context) => {
         })
         .catch(err => {
             console.log(err);
-            context.response.status = 400;
+            context.response.status = 500;
         });
 });
 
@@ -68,17 +113,29 @@ router.get("/news/:id", async (context) => {
 // Update Route
 router.put("/news/:id", async (context) => {
     const id = context.params.id
-    const updateOps = context.request.body;
+    const body = context.request.body;
 
-    await News.updateOne({ _id: id }, { $set: updateOps })
+    const { error, value } = newsValidationSchema.validate(body, {
+        abortEarly: false,
+    });
+    if (error) {
+        context.response.status = 400;
+        return context.body = error.details;
+    }
+
+    const currentDate = { date: Date.now() };
+    const updatedBody = Object.assign({}, body, currentDate);
+
+    await News.updateOne({ _id: id }, { $set: updatedBody })
         .exec()
         .then(result => {
             console.log(result);
             context.response.status = 200;
+            context.body = value;
         })
         .catch(err => {
             console.log(err);
-            context.response.status = 400;
+            context.response.status = 500;
         });
 });
 
@@ -94,7 +151,7 @@ router.delete("/news/:id", async (context) => {
         })
         .catch(err => {
             console.log(err);
-            context.response.status = 400;
+            context.response.status = 500;
         });
 });
 
