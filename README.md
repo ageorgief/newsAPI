@@ -59,7 +59,16 @@ Clients can filter news articles by title or date by sending a GET request with 
 ```filterBy=title~(value)``` or ```filterBy=date~(value)```, where value for title should be a ***string*** and the value for date should be string in the following format: ***YYYY-MM-DD***
 
 Clients can use any combination of sortBy and filterBy query parameters.
-
+<br>***Examples:***<br>
+```http://localhost:5252/news?filterBy=title~weather```<br>
+```http://localhost:5252/news?filterBy=date~2023-01-01```<br>
+```http://localhost:5252/news?sortBy=title~asc```<br>
+```http://localhost:5252/news?sortBy=date~asc```<br>
+```http://localhost:5252/news?sortBy=title~asc&sortBy=date~desc&filterBy=title~weather```<br>
+```http://localhost:5252/news?filterBy=title~weather&filterBy=date~2023-01-01```<br>
+```http://localhost:5252/news?sfilterBy=title~weather```<br>
+```http://localhost:5252/news?sortBy=title~asc&sortBy=date~desc&filterBy=title~weather```<br>
+```http://localhost:5252/news?sortBy=title~asc&sortBy=date~desc&filterBy=title~weather```<br>
 
 ### Error Handling
 The API will return appropriate HTTP status codes and error messages in case of invalid requests or server errors.
