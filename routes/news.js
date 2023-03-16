@@ -9,13 +9,19 @@ router.use(bodyParser());
 
 // Create Route
 router.post("/news", async (context) => {
+    if (Object.keys(context.query).length != 0) {
+        context.response.status = 400;
+        return;
+    }
+
     const body = context.request.body
     const { error, value } = newsValidationSchema.validate(body, {
         abortEarly: false,
     });
     if (error) {
         context.response.status = 400;
-        return context.body = error.details;
+        context.body = error.details;
+        return;
     }
 
     const news = new News({
@@ -54,16 +60,20 @@ router.get("/news", async (context) => {
             
         } 
 
-        filterBy.forEach((filter) => {
+        for (const filter of filterBy) {
             const [field, value] = filter.split('~');
             if (field === 'date') {
+                if (!(/^\d{4}-\d{2}-\d{2}$/.test(value))) {
+                    context.response.status = 400; 
+                    return;
+                }
                 const date = new Date(value);
                 const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate()); // extract the date portion only
                 query = query.where(field).gte(dateOnly).lt(new Date(dateOnly.getTime() + 24 * 60 * 60 * 1000));
             } else {
                 query = query.where(field).regex(new RegExp(value, 'i'));
             }
-        });
+        }
     }
 
     if (sortBy) {
@@ -120,7 +130,8 @@ router.put("/news/:id", async (context) => {
     });
     if (error) {
         context.response.status = 400;
-        return context.body = error.details;
+        context.body = error.details;
+        return;
     }
 
     const currentDate = { date: Date.now() };
